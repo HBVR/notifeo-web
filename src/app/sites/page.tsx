@@ -44,6 +44,9 @@ export default async function SitesPage() {
               <Link href="/sites" className="text-blue-600">
                 Sites
               </Link>
+              <Link href="/team" className="text-gray-600 hover:text-gray-900">
+                Équipe
+              </Link>
             </nav>
             <SignOutButton />
           </div>
