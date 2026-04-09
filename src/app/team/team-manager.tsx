@@ -66,10 +66,8 @@ export default function TeamManager({
       );
 
       if (fnError) {
-        // Essaye d'extraire le message de l'erreur
         let msg = fnError.message || 'Erreur lors de l’invitation';
-        // @ts-expect-error - context can carry the raw response body
-        const ctx = fnError.context;
+        const ctx = (fnError as unknown as { context?: Response }).context;
         if (ctx && typeof ctx.text === 'function') {
           try {
             const txt = await ctx.text();
