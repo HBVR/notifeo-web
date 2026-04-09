@@ -15,17 +15,44 @@ export default function WelcomePage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        router.replace('/login');
-        return;
-      }
-      setEmail(user.email ?? null);
+    let cancelled = false;
+
+    function applySession(userEmail: string | null | undefined) {
+      if (cancelled) return;
+      setEmail(userEmail ?? null);
       setChecking(false);
-    })();
+    }
+
+    // 1. Listen for any auth state change (covers hash detection on mount)
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        applySession(session.user.email);
+      }
+    });
+
+    // 2. Also try immediately in case the session is already in storage
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        applySession(data.session.user.email);
+      }
+    });
+
+    // 3. Fallback: if no session after 5 seconds, redirect to login
+    const timeout = setTimeout(() => {
+      if (cancelled) return;
+      setChecking((prev) => {
+        if (prev) {
+          router.replace('/login');
+        }
+        return prev;
+      });
+    }, 5000);
+
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, [router, supabase]);
 
   async function submit(e: React.FormEvent) {
