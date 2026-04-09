@@ -68,9 +68,16 @@ export default function TeamManager({
         body: JSON.stringify({ email: email.trim(), role }),
       });
 
-      const result = await resp.json();
+      const rawText = await resp.text();
+      let result: { error?: string; success?: boolean } = {};
+      try {
+        result = JSON.parse(rawText);
+      } catch {
+        // pas du JSON — on affichera le texte brut
+      }
+
       if (!resp.ok) {
-        setError(result.error || 'Erreur lors de l’invitation');
+        setError(result.error || rawText || `HTTP ${resp.status}`);
         setSubmitting(false);
         return;
       }
