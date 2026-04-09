@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
-type Incident = {
+export type Incident = {
   id: string;
   title: string;
   description: string | null;

@@ -23,7 +23,8 @@ export default async function SitesPage() {
     .order('created_at', { ascending: false });
 
   const orgName =
-    (profile?.organizations as { name: string } | null)?.name ?? 'Organisation';
+    (profile?.organizations as unknown as { name: string } | null)?.name ??
+    'Organisation';
 
   return (
     <main className="min-h-screen bg-gray-50">

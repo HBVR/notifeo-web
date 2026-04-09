@@ -25,7 +25,8 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false });
 
   const orgName =
-    (profile?.organizations as { name: string } | null)?.name ?? 'Organisation';
+    (profile?.organizations as unknown as { name: string } | null)?.name ??
+    'Organisation';
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -56,7 +57,9 @@ export default async function DashboardPage() {
           <h2 className="text-2xl font-bold text-gray-900">Incidents</h2>
           <span className="text-sm text-gray-500">{incidents?.length ?? 0} total</span>
         </div>
-        <IncidentsList initialIncidents={incidents ?? []} />
+        <IncidentsList
+          initialIncidents={(incidents as unknown as import('./incidents-list').Incident[]) ?? []}
+        />
       </div>
     </main>
   );
