@@ -64,6 +64,14 @@ export default function WelcomePage() {
         }
       } catch (e) {
         if (!cancelled) {
+          // Nettoyer le hash pour éviter la boucle de redirection
+          if (typeof window !== 'undefined') {
+            window.history.replaceState(
+              null,
+              '',
+              window.location.pathname + window.location.search
+            );
+          }
           setInitError(e instanceof Error ? e.message : String(e));
           setChecking(false);
         }
@@ -116,7 +124,11 @@ export default function WelcomePage() {
             nouvelle invitation.
           </p>
           <button
-            onClick={() => router.replace('/login')}
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.location.href = '/login';
+              }
+            }}
             className="w-full rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
           >
             Aller à la connexion
