@@ -1,11 +1,11 @@
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import IncidentsList from './incidents-list';
-import SignOutButton from './sign-out-button';
+import SitesManager from './sites-manager';
+import SignOutButton from '../sign-out-button';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
-export default async function DashboardPage() {
+export default async function SitesPage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -13,15 +13,13 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, role, organizations(name)')
+    .select('organization_id, organizations(name)')
     .eq('id', user!.id)
     .single();
 
-  const { data: incidents } = await supabase
-    .from('incidents')
-    .select(
-      'id, title, description, severity, status, created_at, photo_url, sites(name, address), reporter:profiles!incidents_reporter_id_fkey(full_name)'
-    )
+  const { data: sites } = await supabase
+    .from('sites')
+    .select('id, name, address, qr_token, created_at')
     .order('created_at', { ascending: false });
 
   const orgName =
@@ -39,10 +37,10 @@ export default async function DashboardPage() {
           </div>
           <div className="flex items-center gap-6">
             <nav className="flex gap-4 text-sm font-medium">
-              <Link href="/" className="text-blue-600">
+              <Link href="/" className="text-gray-600 hover:text-gray-900">
                 Incidents
               </Link>
-              <Link href="/sites" className="text-gray-600 hover:text-gray-900">
+              <Link href="/sites" className="text-blue-600">
                 Sites
               </Link>
             </nav>
@@ -52,11 +50,16 @@ export default async function DashboardPage() {
       </header>
 
       <div className="mx-auto max-w-6xl px-6 py-8">
-        <div className="mb-6 flex items-baseline justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Incidents</h2>
-          <span className="text-sm text-gray-500">{incidents?.length ?? 0} total</span>
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Sites</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Créez un site puis téléchargez le QR code à imprimer et afficher sur place.
+          </p>
         </div>
-        <IncidentsList initialIncidents={incidents ?? []} />
+        <SitesManager
+          initialSites={sites ?? []}
+          organizationId={profile?.organization_id ?? null}
+        />
       </div>
     </main>
   );
