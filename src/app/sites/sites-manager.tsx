@@ -114,18 +114,27 @@ export default function SitesManager({
   }
 
   async function archiveSite(id: string) {
-    await supabase.from('sites').update({ archived_at: new Date().toISOString() }).eq('id', id);
+    const { error, count } = await supabase
+      .from('sites')
+      .update({ archived_at: new Date().toISOString() })
+      .eq('id', id);
+    if (error) { alert('Erreur : ' + error.message); return; }
     setSites((prev) => prev.map((s) => s.id === id ? { ...s, archived_at: new Date().toISOString() } : s));
   }
 
   async function unarchiveSite(id: string) {
-    await supabase.from('sites').update({ archived_at: null }).eq('id', id);
+    const { error } = await supabase
+      .from('sites')
+      .update({ archived_at: null })
+      .eq('id', id);
+    if (error) { alert('Erreur : ' + error.message); return; }
     setSites((prev) => prev.map((s) => s.id === id ? { ...s, archived_at: null } : s));
   }
 
   async function deleteSite(id: string) {
     if (!confirm('Supprimer ce site définitivement ? Les notifs associées seront aussi supprimées.')) return;
-    await supabase.from('sites').delete().eq('id', id);
+    const { error } = await supabase.from('sites').delete({ count: 'exact' }).eq('id', id);
+    if (error) { alert('Erreur : ' + error.message); return; }
     setSites((prev) => prev.filter((s) => s.id !== id));
   }
 
