@@ -155,7 +155,8 @@ export default function SignalerContent() {
 
   // Upload photo to Supabase Storage (resized to max 1024px)
   async function uploadPhoto(notifId: string): Promise<string | null> {
-    const file = photoFileRef.current;
+    // Lire le fichier directement depuis l'input DOM (le plus fiable)
+    const file = fileInputRef.current?.files?.[0] ?? photoFileRef.current;
     const org = orgIdRef.current;
     if (!file) throw new Error('Aucun fichier photo sélectionné');
     if (!org) throw new Error('Organisation non trouvée — impossible d\'uploader');
@@ -165,7 +166,6 @@ export default function SignalerContent() {
       const result = await resizeImage(file, 1024, 0.8);
       blob = result.blob;
     } catch {
-      // Fallback: upload le fichier original sans resize
       blob = file;
     }
 
@@ -205,7 +205,8 @@ export default function SignalerContent() {
 
       if (insertErr) throw insertErr;
 
-      if (photoFileRef.current && notif) {
+      const hasPhoto = !!(fileInputRef.current?.files?.[0] ?? photoFileRef.current);
+      if (hasPhoto && notif) {
         const path = await uploadPhoto(notif.id);
         if (path) {
           await supabase
