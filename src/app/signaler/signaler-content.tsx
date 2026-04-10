@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
@@ -26,10 +26,12 @@ export default function SignalerContent() {
   const searchParams = useSearchParams();
   const supabase = createClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const photoFileRef = useRef<File | null>(null);
 
   // Auth
   const [userId, setUserId] = useState<string | null>(null);
   const [orgId, setOrgId] = useState<string | null>(null);
+  const orgIdRef = useRef<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Step
@@ -77,6 +79,7 @@ export default function SignalerContent() {
 
       if (profile?.organization_id) {
         setOrgId(profile.organization_id);
+        orgIdRef.current = profile.organization_id;
       }
 
       const { data: sitesData } = await supabase
@@ -145,25 +148,28 @@ export default function SignalerContent() {
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    photoFileRef.current = file;
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
   }
 
   // Upload photo to Supabase Storage (resized to max 1024px)
   async function uploadPhoto(notifId: string): Promise<string | null> {
-    if (!photoFile) throw new Error('Aucun fichier photo sélectionné');
-    if (!orgId) throw new Error('Organisation non trouvée — impossible d\'uploader');
+    const file = photoFileRef.current;
+    const org = orgIdRef.current;
+    if (!file) throw new Error('Aucun fichier photo sélectionné');
+    if (!org) throw new Error('Organisation non trouvée — impossible d\'uploader');
 
     let blob: Blob;
     try {
-      const result = await resizeImage(photoFile, 1024, 0.8);
+      const result = await resizeImage(file, 1024, 0.8);
       blob = result.blob;
-    } catch (resizeErr) {
+    } catch {
       // Fallback: upload le fichier original sans resize
-      blob = photoFile;
+      blob = file;
     }
 
-    const path = `${orgId}/${notifId}.jpg`;
+    const path = `${org}/${notifId}.jpg`;
     const { error } = await supabase.storage
       .from('incident-photos')
       .upload(path, blob, { contentType: 'image/jpeg', upsert: true });
@@ -199,7 +205,7 @@ export default function SignalerContent() {
 
       if (insertErr) throw insertErr;
 
-      if (photoFile && notif) {
+      if (photoFileRef.current && notif) {
         const path = await uploadPhoto(notif.id);
         if (path) {
           await supabase
@@ -226,6 +232,7 @@ export default function SignalerContent() {
     setDescription('');
     setSeverity('medium');
     setFreeLocation('');
+    photoFileRef.current = null;
     setPhotoFile(null);
     setPhotoPreview(null);
     setError(null);
