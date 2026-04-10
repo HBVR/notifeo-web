@@ -135,11 +135,17 @@ export default function SignalerContent() {
 
   // Create a new site inline
   async function createSite() {
-    if (!canCreateSite) {
-      setError('Limite de sites atteinte. Passez en Pro pour créer plus de sites.');
-      return;
-    }
     if (!newSiteName.trim() || !orgId) return;
+    try {
+      const resp = await fetch('/api/usage');
+      if (resp.ok) {
+        const usage = await resp.json();
+        if (!usage.canCreateSite) {
+          setError('Limite de sites atteinte. Passez en Pro pour créer plus de sites.');
+          return;
+        }
+      }
+    } catch {}
     setCreatingSite(true);
     const { data, error } = await supabase
       .from('sites')
@@ -202,10 +208,6 @@ export default function SignalerContent() {
 
   // Submit the report
   async function submit() {
-    if (!canCreateNotif) {
-      setError('Limite de notifs atteinte pour ce mois. Passez en Pro pour continuer.');
-      return;
-    }
     if (!title.trim()) {
       setError('Le titre est obligatoire.');
       return;
@@ -217,6 +219,17 @@ export default function SignalerContent() {
     setSubmitting(true);
     setError(null);
     try {
+      // Vérifier la limite de notifs en live
+      const usageResp = await fetch('/api/usage');
+      if (usageResp.ok) {
+        const usage = await usageResp.json();
+        if (!usage.canCreateNotif) {
+          setError('Limite de notifs atteinte pour ce mois. Passez en Pro pour continuer.');
+          setSubmitting(false);
+          return;
+        }
+      }
+
       const { data: notif, error: insertErr } = await supabase
         .from('incidents')
         .insert({

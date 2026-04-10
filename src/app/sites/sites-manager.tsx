@@ -38,11 +38,18 @@ export default function SitesManager({
 
   async function createSite(e: React.FormEvent) {
     e.preventDefault();
-    if (!canCreateSite) {
-      setError('Limite de sites atteinte. Passez en Pro pour créer plus de sites.');
-      return;
-    }
     if (!name.trim() || !organizationId) return;
+    // Vérifier la limite en live (pas le prop qui peut être stale)
+    try {
+      const resp = await fetch('/api/usage');
+      if (resp.ok) {
+        const usage = await resp.json();
+        if (!usage.canCreateSite) {
+          setError('Limite de sites atteinte. Passez en Pro pour créer plus de sites.');
+          return;
+        }
+      }
+    } catch {}
     setSubmitting(true);
     setError(null);
     const { data, error } = await supabase
