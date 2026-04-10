@@ -154,19 +154,44 @@ export default function NotifsList({
 
     // Supprimer du storage
     await supabase.storage.from('incident-photos').remove([path]);
-    // Mettre à jour la DB
-    await supabase.from('incidents').update({ [field]: null }).eq('id', notif.id);
-    // Mettre à jour l'état local
-    setIncidents((prev) =>
-      prev.map((i) => (i.id === notif.id ? { ...i, [field]: null } : i))
-    );
-    if (type === 'original') {
-      setPhotoUrls((prev) => { const n = { ...prev }; delete n[notif.id]; return n; });
-    } else {
+
+    // Si on supprime l'originale et qu'il y a une annotée → promouvoir l'annotée en originale
+    if (type === 'original' && notif.annotated_photo_url) {
+      await supabase
+        .from('incidents')
+        .update({ photo_url: notif.annotated_photo_url, annotated_photo_url: null })
+        .eq('id', notif.id);
+      // Mettre à jour l'état local
+      setIncidents((prev) =>
+        prev.map((i) =>
+          i.id === notif.id
+            ? { ...i, photo_url: notif.annotated_photo_url, annotated_photo_url: null }
+            : i
+        )
+      );
+      // Transférer l'URL signée de annotée vers originale
+      const annUrl = annotatedUrls[notif.id];
+      if (annUrl) {
+        setPhotoUrls((prev) => ({ ...prev, [notif.id]: annUrl }));
+      }
       setAnnotatedUrls((prev) => { const n = { ...prev }; delete n[notif.id]; return n; });
-    }
-    if (openNotif?.id === notif.id) {
-      setOpenNotif({ ...notif, [field]: null });
+      if (openNotif?.id === notif.id) {
+        setOpenNotif({ ...notif, photo_url: notif.annotated_photo_url, annotated_photo_url: null });
+      }
+    } else {
+      // Suppression simple (annotée, ou originale sans annotée)
+      await supabase.from('incidents').update({ [field]: null }).eq('id', notif.id);
+      setIncidents((prev) =>
+        prev.map((i) => (i.id === notif.id ? { ...i, [field]: null } : i))
+      );
+      if (type === 'original') {
+        setPhotoUrls((prev) => { const n = { ...prev }; delete n[notif.id]; return n; });
+      } else {
+        setAnnotatedUrls((prev) => { const n = { ...prev }; delete n[notif.id]; return n; });
+      }
+      if (openNotif?.id === notif.id) {
+        setOpenNotif({ ...notif, [field]: null });
+      }
     }
     setCarouselIdx(0);
   }
