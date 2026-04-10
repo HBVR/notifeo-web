@@ -329,7 +329,9 @@ export default function NotifsList({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       {!readIds.has(inc.id) && (
-                        <span className="flex h-2 w-2 rounded-full bg-blue-500" title="Nouveau" />
+                        <span className="rounded-full bg-blue-500 px-1.5 py-0.5 text-[9px] font-bold text-white leading-none">
+                          NEW
+                        </span>
                       )}
                       <span
                         className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${SEVERITY_STYLES[inc.severity]}`}
