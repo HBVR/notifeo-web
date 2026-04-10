@@ -321,7 +321,7 @@ export default function NotifsList({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       {isNew(inc) && (
-                        <span className="rounded-full bg-blue-500 px-1.5 py-0.5 text-[9px] font-bold text-white leading-none">
+                        <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[9px] font-bold text-white leading-none">
                           NEW
                         </span>
                       )}

@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
@@ -38,7 +37,7 @@ export default function NotifsNavLink({ isActive }: { isActive: boolean }) {
   }, [pathname]);
 
   return (
-    <Link
+    <a
       href="/"
       className={`relative ${isActive ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900'}`}
     >
@@ -48,6 +47,6 @@ export default function NotifsNavLink({ isActive }: { isActive: boolean }) {
           {newCount > 99 ? '99+' : newCount}
         </span>
       )}
-    </Link>
+    </a>
   );
 }
