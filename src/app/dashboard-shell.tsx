@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import SignOutButton from './sign-out-button';
 import UsageBar from './usage-bar';
+import NotifsNavLink from './notifs-nav-link';
 import type { Usage } from '@/lib/plan-limits';
 
 export default function DashboardShell({
@@ -52,7 +53,8 @@ export default function DashboardShell({
           </div>
           <div className="flex items-center gap-6">
             <nav className="flex gap-4 text-sm font-medium">
-              {tabs.map((t) => (
+              <NotifsNavLink isActive={activeTab === 'notifs'} />
+              {tabs.filter((t) => t.key !== 'notifs').map((t) => (
                 <Link
                   key={t.key}
                   href={t.href}
