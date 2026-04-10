@@ -3,7 +3,9 @@ import Image from 'next/image';
 import { createClient } from '@/lib/supabase/server';
 import NotifsList from './incidents-list';
 import SignOutButton from './sign-out-button';
+import UsageBar from './usage-bar';
 import Landing from './landing';
+import { getUsage, type PlanName } from '@/lib/plan-limits';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,9 +22,14 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, role, organizations(name)')
+    .select('full_name, role, organization_id, organizations(name, plan)')
     .eq('id', user!.id)
     .single();
+
+  const org = profile?.organizations as unknown as { name: string; plan: string } | null;
+  const orgId = profile?.organization_id ?? '';
+  const plan = (org?.plan ?? 'starter') as PlanName;
+  const usage = await getUsage(supabase, orgId, plan);
 
   const { data: incidents } = await supabase
     .from('incidents')
@@ -41,9 +48,7 @@ export default async function DashboardPage() {
     .filter((s) => s.archived_at)
     .map((s) => s.name);
 
-  const orgName =
-    (profile?.organizations as unknown as { name: string } | null)?.name ??
-    'Organisation';
+  const orgName = org?.name ?? 'Organisation';
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -81,6 +86,7 @@ export default async function DashboardPage() {
       </header>
 
       <div className="mx-auto max-w-6xl px-6 py-8">
+        <UsageBar usage={usage} />
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900">Notifs</h2>
           <Link
