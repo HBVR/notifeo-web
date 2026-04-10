@@ -328,6 +328,7 @@ export default function SignalerContent() {
                   onClick={() => {
                     setSelectedSite(site);
                     setIsFreeReport(false);
+                    setError(null);
                     setStep('form');
                   }}
                   className="w-full rounded-xl border border-gray-200 bg-white p-4 text-left hover:border-blue-300 hover:bg-blue-50 active:bg-blue-100 transition-colors"
@@ -393,6 +394,7 @@ export default function SignalerContent() {
               onClick={() => {
                 setSelectedSite(null);
                 setIsFreeReport(true);
+                setError(null);
                 setStep('form');
               }}
               className="w-full rounded-xl border border-gray-200 bg-white p-4 text-center font-medium text-gray-600 hover:bg-gray-50"
