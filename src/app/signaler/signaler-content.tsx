@@ -186,7 +186,7 @@ export default function SignalerContent() {
 
     let blob: Blob;
     try {
-      const result = await resizeImage(file, 1024, 0.8);
+      const result = await resizeImage(file, 512, 0.7);
       blob = result.blob;
     } catch {
       blob = file;
