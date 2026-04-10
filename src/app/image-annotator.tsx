@@ -255,27 +255,21 @@ export default function ImageAnnotator({ imageUrl, storagePath, onSave, onCancel
             alt="Photo"
             onLoad={onImageLoad}
             className="max-w-full max-h-[75vh] rounded-lg"
-            style={{ display: imgLoaded ? 'block' : 'none' }}
           />
-          {!imgLoaded && (
-            <p className="text-white py-12">Chargement de l&apos;image...</p>
-          )}
 
           {/* Drawing overlay (transparent canvas on top) */}
-          {imgLoaded && (
-            <canvas
-              ref={overlayRef}
-              className="absolute top-0 left-0 w-full h-full cursor-crosshair rounded-lg"
-              style={{ touchAction: 'none' }}
-              onMouseDown={startDraw}
-              onMouseMove={draw}
-              onMouseUp={stopDraw}
-              onMouseLeave={stopDraw}
-              onTouchStart={startDraw}
-              onTouchMove={draw}
-              onTouchEnd={stopDraw}
-            />
-          )}
+          <canvas
+            ref={overlayRef}
+            className="absolute top-0 left-0 w-full h-full cursor-crosshair rounded-lg"
+            style={{ touchAction: 'none' }}
+            onMouseDown={startDraw}
+            onMouseMove={draw}
+            onMouseUp={stopDraw}
+            onMouseLeave={stopDraw}
+            onTouchStart={startDraw}
+            onTouchMove={draw}
+            onTouchEnd={stopDraw}
+          />
 
           {/* Text input overlay */}
           {textPos && overlayRef.current && (
