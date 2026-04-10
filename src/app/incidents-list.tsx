@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import ImageAnnotator from './image-annotator';
 
@@ -60,6 +60,8 @@ export default function NotifsList({
   const [showAnnotator, setShowAnnotator] = useState(false);
   const [annotatorBlobUrl, setAnnotatorBlobUrl] = useState<string | null>(null);
   const [carouselIdx, setCarouselIdx] = useState(0); // 0 = original, 1 = annoté
+  const incidentsRef = useRef<Incident[]>(initialNotifs);
+  useEffect(() => { incidentsRef.current = incidents; }, [incidents]);
 
   // Liste unique des sites pour les pills de filtre
   const siteNames = useMemo(() => {
@@ -358,16 +360,19 @@ export default function NotifsList({
           }}
           onSave={async (blob) => {
             const notifId = openNotif.id;
-            const orgId = openNotif.photo_url?.split('/')[0] ?? 'unknown';
+            // Lire les données les plus récentes (pas la closure stale)
+            const current = incidentsRef.current.find((i) => i.id === notifId);
+            const currentPhotoUrl = current?.photo_url ?? openNotif.photo_url;
+            const currentAnnotatedUrl = current?.annotated_photo_url ?? openNotif.annotated_photo_url;
+            const orgId = (currentPhotoUrl ?? currentAnnotatedUrl)?.split('/')[0] ?? 'unknown';
 
-            // Supprimer l'ancienne annotation si elle existe
-            if (openNotif.annotated_photo_url) {
+            // Supprimer l'ancienne annotation SI elle existe ET n'est PAS la photo principale
+            if (currentAnnotatedUrl && currentAnnotatedUrl !== currentPhotoUrl) {
               await supabase.storage
                 .from('incident-photos')
-                .remove([openNotif.annotated_photo_url]);
+                .remove([currentAnnotatedUrl]);
             }
 
-            // Nouveau nom unique (timestamp) pour éviter le cache navigateur
             const path = `${orgId}/${notifId}_ann_${Date.now()}.jpg`;
 
             await supabase.storage
