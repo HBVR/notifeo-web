@@ -21,7 +21,7 @@ export default async function DashboardPage() {
   const { data: incidents } = await supabase
     .from('incidents')
     .select(
-      'id, title, description, severity, status, created_at, photo_url, sites(name, address), reporter:profiles!incidents_reporter_id_fkey(full_name)'
+      'id, title, description, severity, status, created_at, photo_url, free_location, sites(name, address), reporter:profiles!incidents_reporter_id_fkey(full_name)'
     )
     .order('created_at', { ascending: false });
 

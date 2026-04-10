@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
 export type Incident = {
@@ -11,6 +11,7 @@ export type Incident = {
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
   created_at: string;
   photo_url: string | null;
+  free_location?: string | null;
   sites: { name: string; address: string | null } | null;
   reporter: { full_name: string | null } | null;
 };
@@ -51,6 +52,27 @@ export default function NotifsList({
   const supabase = createClient();
   const [incidents, setIncidents] = useState<Incident[]>(initialNotifs);
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
+  const [siteFilter, setSiteFilter] = useState<string | null>(null); // null = tous
+  const [openNotif, setOpenNotif] = useState<Incident | null>(null); // modal
+
+  // Liste unique des sites pour les pills de filtre
+  const siteNames = useMemo(() => {
+    const names = new Set<string>();
+    let hasFree = false;
+    for (const inc of incidents) {
+      if (inc.sites?.name) names.add(inc.sites.name);
+      else hasFree = true;
+    }
+    return { names: Array.from(names).sort(), hasFree };
+  }, [incidents]);
+
+  // Filtrer les notifs
+  const filteredIncidents = useMemo(() => {
+    if (siteFilter === null) return incidents;
+    if (siteFilter === '__free__')
+      return incidents.filter((i) => !i.sites);
+    return incidents.filter((i) => i.sites?.name === siteFilter);
+  }, [incidents, siteFilter]);
 
   // Générer les URL signées pour les photos
   useEffect(() => {
@@ -67,7 +89,7 @@ export default function NotifsList({
     })();
   }, [incidents, supabase]);
 
-  // Realtime: écouter les nouveaux incidents et modifications
+  // Realtime
   useEffect(() => {
     const channel = supabase
       .channel('incidents-changes')
@@ -78,7 +100,7 @@ export default function NotifsList({
           const { data } = await supabase
             .from('incidents')
             .select(
-              'id, title, description, severity, status, created_at, photo_url, sites(name, address), reporter:profiles!incidents_reporter_id_fkey(full_name)'
+              'id, title, description, severity, status, created_at, photo_url, free_location, sites(name, address), reporter:profiles!incidents_reporter_id_fkey(full_name)'
             )
             .order('created_at', { ascending: false });
           if (data) setIncidents(data as unknown as Incident[]);
@@ -98,88 +120,244 @@ export default function NotifsList({
   }
 
   async function deleteNotif(id: string) {
-    if (!confirm('Supprimer cette notif ? Cette action est irréversible.')) return;
+    if (!confirm('Supprimer cette notif ? Cette action est irréversible.'))
+      return;
     setIncidents((prev) => prev.filter((i) => i.id !== id));
+    if (openNotif?.id === id) setOpenNotif(null);
     await supabase.from('incidents').delete().eq('id', id);
   }
 
   if (incidents.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center">
-        <p className="text-gray-500">Aucune notif pour l'instant.</p>
+        <p className="text-gray-500">Aucune notif pour l&apos;instant.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      {incidents.map((inc) => (
-        <article
-          key={inc.id}
-          className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
+    <>
+      {/* ====== FILTRES PAR SITE ====== */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        <button
+          onClick={() => setSiteFilter(null)}
+          className={`rounded-full px-3 py-1 text-sm font-medium border transition-colors ${
+            siteFilter === null
+              ? 'bg-blue-600 text-white border-blue-600'
+              : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'
+          }`}
         >
-          <div className="flex gap-5">
-            {photoUrls[inc.id] && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={photoUrls[inc.id]}
-                alt=""
-                className="h-28 w-28 flex-shrink-0 rounded-lg object-cover bg-gray-100"
-              />
-            )}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span
-                      className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${SEVERITY_STYLES[inc.severity]}`}
-                    >
-                      {SEVERITY_LABELS[inc.severity]}
-                    </span>
-                    <span
-                      className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLES[inc.status]}`}
-                    >
-                      {STATUS_LABELS[inc.status]}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 truncate">
-                    {inc.title}
-                  </h3>
-                  {inc.description && (
-                    <p className="mt-1 text-sm text-gray-600 line-clamp-2">
-                      {inc.description}
+          Tous ({incidents.length})
+        </button>
+        {siteNames.names.map((name) => (
+          <button
+            key={name}
+            onClick={() => setSiteFilter(name)}
+            className={`rounded-full px-3 py-1 text-sm font-medium border transition-colors ${
+              siteFilter === name
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400'
+            }`}
+          >
+            {name} (
+            {incidents.filter((i) => i.sites?.name === name).length})
+          </button>
+        ))}
+        {siteNames.hasFree && (
+          <button
+            onClick={() => setSiteFilter('__free__')}
+            className={`rounded-full px-3 py-1 text-sm font-medium border transition-colors ${
+              siteFilter === '__free__'
+                ? 'bg-amber-600 text-white border-amber-600'
+                : 'bg-white text-gray-600 border-gray-300 hover:border-amber-400'
+            }`}
+          >
+            📍 Libre ({incidents.filter((i) => !i.sites).length})
+          </button>
+        )}
+      </div>
+
+      {/* ====== LISTE DES NOTIFS ====== */}
+      <div className="space-y-3">
+        {filteredIncidents.map((inc) => (
+          <article
+            key={inc.id}
+            className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm cursor-pointer hover:border-blue-200 hover:shadow-md transition-all"
+            onClick={() => setOpenNotif(inc)}
+          >
+            <div className="flex gap-5">
+              {photoUrls[inc.id] && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={photoUrls[inc.id]}
+                  alt=""
+                  className="h-20 w-20 flex-shrink-0 rounded-lg object-cover bg-gray-100"
+                />
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span
+                        className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${SEVERITY_STYLES[inc.severity]}`}
+                      >
+                        {SEVERITY_LABELS[inc.severity]}
+                      </span>
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLES[inc.status]}`}
+                      >
+                        {STATUS_LABELS[inc.status]}
+                      </span>
+                    </div>
+                    <h3 className="text-base font-semibold text-gray-900 truncate">
+                      {inc.title}
+                    </h3>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {inc.sites?.name ?? inc.free_location ?? '📍 Libre'} ·{' '}
+                      {new Date(inc.created_at).toLocaleString('fr-FR')}
                     </p>
-                  )}
-                  <p className="mt-2 text-xs text-gray-500">
-                    {inc.sites?.name} ·{' '}
-                    {new Date(inc.created_at).toLocaleString('fr-FR')} ·{' '}
-                    {inc.reporter?.full_name || 'Anonyme'}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <select
-                    value={inc.status}
-                    onChange={(e) => changeStatus(inc.id, e.target.value as Incident['status'])}
-                    className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:border-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  </div>
+                  <div
+                    className="flex items-center gap-2 flex-shrink-0"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <option value="open">Ouvert</option>
-                    <option value="in_progress">En cours</option>
-                    <option value="resolved">Résolu</option>
-                    <option value="closed">Fermé</option>
-                  </select>
-                  <button
-                    onClick={() => deleteNotif(inc.id)}
-                    title="Supprimer"
-                    className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-400 hover:text-red-600 hover:border-red-300 transition-colors"
-                  >
-                    🗑
-                  </button>
+                    <select
+                      value={inc.status}
+                      onChange={(e) =>
+                        changeStatus(
+                          inc.id,
+                          e.target.value as Incident['status']
+                        )
+                      }
+                      className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="open">Ouvert</option>
+                      <option value="in_progress">En cours</option>
+                      <option value="resolved">Résolu</option>
+                      <option value="closed">Fermé</option>
+                    </select>
+                    <button
+                      onClick={() => deleteNotif(inc.id)}
+                      title="Supprimer"
+                      className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs text-gray-400 hover:text-red-600 hover:border-red-300 transition-colors"
+                    >
+                      🗑
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
+          </article>
+        ))}
+        {filteredIncidents.length === 0 && (
+          <div className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center">
+            <p className="text-gray-400">Aucune notif dans ce filtre.</p>
           </div>
-        </article>
-      ))}
-    </div>
+        )}
+      </div>
+
+      {/* ====== MODAL DÉTAIL ====== */}
+      {openNotif && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setOpenNotif(null)}
+        >
+          <div
+            className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Image pleine largeur */}
+            {photoUrls[openNotif.id] && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={photoUrls[openNotif.id]}
+                alt=""
+                className="w-full max-h-96 object-contain bg-gray-100 rounded-t-2xl"
+              />
+            )}
+
+            <div className="p-6 space-y-4">
+              {/* Badges */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span
+                  className={`rounded-full border px-3 py-1 text-xs font-semibold ${SEVERITY_STYLES[openNotif.severity]}`}
+                >
+                  {SEVERITY_LABELS[openNotif.severity]}
+                </span>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLES[openNotif.status]}`}
+                >
+                  {STATUS_LABELS[openNotif.status]}
+                </span>
+              </div>
+
+              {/* Titre */}
+              <h2 className="text-xl font-bold text-gray-900">
+                {openNotif.title}
+              </h2>
+
+              {/* Description */}
+              {openNotif.description && (
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {openNotif.description}
+                </p>
+              )}
+
+              {/* Metadata */}
+              <div className="border-t border-gray-100 pt-4 space-y-1 text-sm text-gray-500">
+                <p>
+                  <strong className="text-gray-700">Site :</strong>{' '}
+                  {openNotif.sites?.name ?? openNotif.free_location ?? '📍 Libre'}
+                </p>
+                {openNotif.sites?.address && (
+                  <p>
+                    <strong className="text-gray-700">Adresse :</strong>{' '}
+                    {openNotif.sites.address}
+                  </p>
+                )}
+                <p>
+                  <strong className="text-gray-700">Signalé par :</strong>{' '}
+                  {openNotif.reporter?.full_name || 'Anonyme'}
+                </p>
+                <p>
+                  <strong className="text-gray-700">Date :</strong>{' '}
+                  {new Date(openNotif.created_at).toLocaleString('fr-FR')}
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 border-t border-gray-100 pt-4">
+                <select
+                  value={openNotif.status}
+                  onChange={(e) => {
+                    const newStatus = e.target.value as Incident['status'];
+                    changeStatus(openNotif.id, newStatus);
+                    setOpenNotif({ ...openNotif, status: newStatus });
+                  }}
+                  className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700"
+                >
+                  <option value="open">Ouvert</option>
+                  <option value="in_progress">En cours</option>
+                  <option value="resolved">Résolu</option>
+                  <option value="closed">Fermé</option>
+                </select>
+                <button
+                  onClick={() => deleteNotif(openNotif.id)}
+                  className="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                >
+                  Supprimer
+                </button>
+                <button
+                  onClick={() => setOpenNotif(null)}
+                  className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

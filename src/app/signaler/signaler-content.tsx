@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
+import { resizeImage } from '@/lib/resize-image';
 
 type Site = {
   id: string;
@@ -148,14 +149,14 @@ export default function SignalerContent() {
     setPhotoPreview(URL.createObjectURL(file));
   }
 
-  // Upload photo to Supabase Storage
+  // Upload photo to Supabase Storage (resized to max 1024px)
   async function uploadPhoto(notifId: string): Promise<string | null> {
     if (!photoFile || !orgId) return null;
-    const ext = photoFile.name.split('.').pop() || 'jpg';
-    const path = `${orgId}/${notifId}.${ext}`;
+    const { blob } = await resizeImage(photoFile, 1024, 0.8);
+    const path = `${orgId}/${notifId}.jpg`;
     const { error } = await supabase.storage
       .from('incident-photos')
-      .upload(path, photoFile, { contentType: photoFile.type, upsert: true });
+      .upload(path, blob, { contentType: 'image/jpeg', upsert: true });
     if (error) throw error;
     return path;
   }
