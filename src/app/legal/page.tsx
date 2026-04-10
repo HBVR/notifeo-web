@@ -16,9 +16,9 @@ export default function LegalPage() {
         <h2>Éditeur du site</h2>
         <p>
           <strong>HBVR</strong><br />
-          Forme juridique : [à compléter]<br />
-          Siège social : [adresse à compléter]<br />
-          SIRET : [à compléter]<br />
+          Forme juridique : SAS<br />
+          Siège social : 8 rue Jeanne Pariset, 69530 BRIGNAIS<br />
+          SIRET : 84763452400031<br />
           Responsable de la publication : David SEVE<br />
           Email : <a href="mailto:contact@notifeo.fr">contact@notifeo.fr</a>
         </p>
@@ -32,7 +32,7 @@ export default function LegalPage() {
         <p>
           <strong>Supabase Inc.</strong> (base de données et stockage)<br />
           970 Toa Payoh North #07-04, Singapore 318992<br />
-          Données hébergées en Europe (AWS eu-west-1, Irlande)<br />
+          Données hébergées en Europe (OVH eu-west-1, Irlande)<br />
           Site : <a href="https://supabase.com" target="_blank" rel="noopener noreferrer">supabase.com</a>
         </p>
 
