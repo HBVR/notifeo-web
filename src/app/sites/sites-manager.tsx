@@ -19,11 +19,13 @@ export default function SitesManager({
   organizationId,
   currentUserId,
   currentUserRole,
+  canCreateSite = true,
 }: {
   initialSites: Site[];
   organizationId: string | null;
   currentUserId?: string;
   currentUserRole?: string;
+  canCreateSite?: boolean;
 }) {
   const isManager = currentUserRole === 'manager' || currentUserRole === 'admin';
   const supabase = createClient();
@@ -36,6 +38,10 @@ export default function SitesManager({
 
   async function createSite(e: React.FormEvent) {
     e.preventDefault();
+    if (!canCreateSite) {
+      setError('Limite de sites atteinte. Passez en Pro pour créer plus de sites.');
+      return;
+    }
     if (!name.trim() || !organizationId) return;
     setSubmitting(true);
     setError(null);

@@ -14,7 +14,7 @@ export default async function SitesPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('organization_id, role, organizations(name)')
+    .select('organization_id, role, organizations(name, plan)')
     .eq('id', user!.id)
     .single();
 
@@ -24,8 +24,14 @@ export default async function SitesPage() {
     .order('archived_at', { ascending: true, nullsFirst: true })
     .order('created_at', { ascending: false });
 
-  const orgName =
-    (profile?.organizations as unknown as { name: string } | null)?.name ??
+  const org = profile?.organizations as unknown as { name: string; plan: string } | null;
+
+  // Import inline pour éviter un import top-level qui casse
+  const { getUsage } = await import('@/lib/plan-limits');
+  const plan = (org?.plan ?? 'starter') as 'starter' | 'pro' | 'business';
+  const usage = await getUsage(supabase, profile?.organization_id ?? '', plan);
+
+  const orgName = org?.name ??
     'Organisation';
 
   return (
@@ -75,6 +81,7 @@ export default async function SitesPage() {
           organizationId={profile?.organization_id ?? null}
           currentUserId={user!.id}
           currentUserRole={(profile?.role as string) ?? 'employee'}
+          canCreateSite={usage.canCreateSite}
         />
       </div>
     </main>
