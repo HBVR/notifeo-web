@@ -21,7 +21,7 @@ export default async function DashboardPage() {
   const { data: incidents } = await supabase
     .from('incidents')
     .select(
-      'id, title, description, severity, status, created_at, photo_url, annotated_photo_url, free_location, sites(name, address), reporter:profiles!incidents_reporter_id_fkey(full_name,email)'
+      'id, title, description, severity, status, created_at, photo_url, annotated_photo_url, free_location, reporter_id, sites(name, address), reporter:profiles!incidents_reporter_id_fkey(full_name,email)'
     )
     .order('created_at', { ascending: false });
 
@@ -84,6 +84,8 @@ export default async function DashboardPage() {
         <NotifsList
           initialNotifs={(incidents as unknown as import('./incidents-list').Incident[]) ?? []}
           sites={(allSites as { id: string; name: string }[]) ?? []}
+          currentUserId={user!.id}
+          currentUserRole={profile?.role as string ?? 'employee'}
         />
       </div>
     </main>

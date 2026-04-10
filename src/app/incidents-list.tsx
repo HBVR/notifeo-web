@@ -14,6 +14,7 @@ export type Incident = {
   photo_url: string | null;
   annotated_photo_url: string | null;
   free_location?: string | null;
+  reporter_id: string | null;
   sites: { name: string; address: string | null } | null;
   reporter: { full_name: string | null; email: string | null } | null;
 };
@@ -51,10 +52,15 @@ type SiteOption = { id: string; name: string };
 export default function NotifsList({
   initialNotifs,
   sites = [],
+  currentUserId,
+  currentUserRole,
 }: {
   initialNotifs: Incident[];
   sites?: SiteOption[];
+  currentUserId?: string;
+  currentUserRole?: string;
 }) {
+  const isManager = currentUserRole === 'manager' || currentUserRole === 'admin';
   const supabase = createClient();
   const [incidents, setIncidents] = useState<Incident[]>(initialNotifs);
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
@@ -121,7 +127,7 @@ export default function NotifsList({
           const { data } = await supabase
             .from('incidents')
             .select(
-              'id, title, description, severity, status, created_at, photo_url, annotated_photo_url, free_location, sites(name, address), reporter:profiles!incidents_reporter_id_fkey(full_name,email)'
+              'id, title, description, severity, status, created_at, photo_url, annotated_photo_url, free_location, reporter_id, sites(name, address), reporter:profiles!incidents_reporter_id_fkey(full_name,email)'
             )
             .order('created_at', { ascending: false });
           if (data) setIncidents(data as unknown as Incident[]);
@@ -341,13 +347,15 @@ export default function NotifsList({
                       <option value="resolved">Résolu</option>
                       <option value="closed">Fermé</option>
                     </select>
-                    <button
-                      onClick={() => deleteNotif(inc.id)}
-                      title="Supprimer"
-                      className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs text-gray-400 hover:text-red-600 hover:border-red-300 transition-colors"
-                    >
-                      🗑
-                    </button>
+                    {(isManager || inc.reporter_id === currentUserId) && (
+                      <button
+                        onClick={() => deleteNotif(inc.id)}
+                        title="Supprimer"
+                        className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs text-gray-400 hover:text-red-600 hover:border-red-300 transition-colors"
+                      >
+                        🗑
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -383,6 +391,8 @@ export default function NotifsList({
           onDeletePhoto={(type) => deletePhoto(openNotif, type)}
           sites={sites}
           onMove={(siteId) => moveNotif(openNotif.id, siteId)}
+          canManage={isManager}
+          isOwner={openNotif.reporter_id === currentUserId}
         />
       )}
 
@@ -458,6 +468,8 @@ function ModalDetail({
   onDeletePhoto,
   sites = [],
   onMove,
+  canManage = false,
+  isOwner = false,
 }: {
   notif: Incident;
   photoUrl?: string;
@@ -471,7 +483,10 @@ function ModalDetail({
   onDeletePhoto: (type: 'original' | 'annotated') => void;
   sites?: SiteOption[];
   onMove?: (siteId: string | null) => void;
+  canManage?: boolean;
+  isOwner?: boolean;
 }) {
+  const canDelete = canManage || isOwner;
   // Build carousel images
   const images: { url: string; label: string; type: 'original' | 'annotated' }[] = [];
   if (photoUrl) images.push({ url: photoUrl, label: 'Original', type: 'original' });
@@ -616,22 +631,26 @@ function ModalDetail({
           })()}
 
           <div className="flex gap-3 border-t border-gray-100 pt-4">
-            <select
-              value={notif.status}
-              onChange={(e) => onChangeStatus(e.target.value as Incident['status'])}
-              className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700"
-            >
-              <option value="open">Ouvert</option>
-              <option value="in_progress">En cours</option>
-              <option value="resolved">Résolu</option>
-              <option value="closed">Fermé</option>
-            </select>
-            <button
-              onClick={onDelete}
-              className="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-            >
-              Supprimer
-            </button>
+            {(canManage || isOwner) && (
+              <select
+                value={notif.status}
+                onChange={(e) => onChangeStatus(e.target.value as Incident['status'])}
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700"
+              >
+                <option value="open">Ouvert</option>
+                <option value="in_progress">En cours</option>
+                <option value="resolved">Résolu</option>
+                <option value="closed">Fermé</option>
+              </select>
+            )}
+            {canDelete && (
+              <button
+                onClick={onDelete}
+                className="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+              >
+                Supprimer
+              </button>
+            )}
             <button
               onClick={onClose}
               className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
