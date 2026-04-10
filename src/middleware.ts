@@ -38,7 +38,9 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/public');
 
-  if (!user && !isPublic) {
+  // La racine "/" est accessible à tous (landing page si pas connecté, dashboard si connecté)
+  const isRoot = pathname === '/';
+  if (!user && !isPublic && !isRoot) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
   if (user && isAuthPage) {

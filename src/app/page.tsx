@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { createClient } from '@/lib/supabase/server';
 import NotifsList from './incidents-list';
 import SignOutButton from './sign-out-button';
+import Landing from './landing';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +12,11 @@ export default async function DashboardPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Pas connecté → landing page marketing
+  if (!user) {
+    return <Landing />;
+  }
 
   const { data: profile } = await supabase
     .from('profiles')
