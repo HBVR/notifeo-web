@@ -579,17 +579,18 @@ export default function SignalerContent() {
             </p>
             <div className="flex gap-3 w-full">
               <button
-                onClick={newReport}
-                className="flex-1 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white"
+                type="button"
+                onClick={() => newReport()}
+                className="flex-1 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white active:bg-blue-800"
               >
                 Nouvelle notif
               </button>
-              <button
-                onClick={() => router.push('/')}
-                className="flex-1 rounded-xl border border-gray-300 bg-white py-3 text-sm font-semibold text-gray-700"
+              <a
+                href="/"
+                className="flex-1 rounded-xl border border-gray-300 bg-white py-3 text-sm font-semibold text-gray-700 text-center active:bg-gray-100"
               >
                 Dashboard
-              </button>
+              </a>
             </div>
           </div>
         )}
