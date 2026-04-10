@@ -62,6 +62,27 @@ export default function Landing() {
         </p>
       </section>
 
+      {/* ====== VIDÉO DÉMO ====== */}
+      <section className="py-16">
+        <div className="mx-auto max-w-4xl px-6">
+          <h2 className="text-center text-3xl font-bold text-gray-900 mb-4">
+            Découvrez Notifeo en action
+          </h2>
+          <p className="mx-auto max-w-xl text-center text-gray-600 mb-10">
+            2 minutes pour comprendre comment Notifeo simplifie vos signalements terrain.
+          </p>
+          <div className="relative w-full overflow-hidden rounded-2xl shadow-2xl" style={{ paddingBottom: '56.25%' }}>
+            <iframe
+              className="absolute inset-0 h-full w-full"
+              src="https://www.youtube.com/embed/_lAcfXil_mY?rel=0"
+              title="Démo Notifeo"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      </section>
+
       {/* ====== COMMENT ÇA MARCHE ====== */}
       <section className="border-t border-gray-100 bg-gray-50 py-20">
         <div className="mx-auto max-w-6xl px-6">
