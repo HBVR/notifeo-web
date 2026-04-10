@@ -100,7 +100,7 @@ export default function IncidentsList({
   if (incidents.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center">
-        <p className="text-gray-500">Aucun incident pour l'instant.</p>
+        <p className="text-gray-500">Aucune notif pour l'instant.</p>
       </div>
     );
   }

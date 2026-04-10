@@ -48,7 +48,7 @@ export default async function SitesPage() {
           <div className="flex items-center gap-6">
             <nav className="flex gap-4 text-sm font-medium">
               <Link href="/" className="text-gray-600 hover:text-gray-900">
-                Incidents
+                Notifs
               </Link>
               <Link href="/sites" className="text-blue-600">
                 Sites

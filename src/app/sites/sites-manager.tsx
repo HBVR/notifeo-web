@@ -54,8 +54,9 @@ export default function SitesManager({
   }
 
   async function downloadQR(site: Site) {
-    // Génère un PNG haute résolution avec le nom du site en dessous
-    const qrDataUrl = await QRCode.toDataURL(site.qr_token, {
+    // Le QR contient l'URL complète → le téléphone l'ouvre directement dans le navigateur
+    const qrUrl = `https://app.notifeo.fr/signaler?site=${site.qr_token}`;
+    const qrDataUrl = await QRCode.toDataURL(qrUrl, {
       width: 1000,
       margin: 2,
       errorCorrectionLevel: 'H',
@@ -81,7 +82,7 @@ export default function SitesManager({
     // Instructions
     ctx.fillStyle = '#374151';
     ctx.font = '28px Arial';
-    ctx.fillText('Scannez pour signaler un incident', W / 2, 120);
+    ctx.fillText('Scannez pour signaler', W / 2, 120);
 
     // QR
     const img = new Image();

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/server';
-import IncidentsList from './incidents-list';
+import NotifsList from './incidents-list';
 import SignOutButton from './sign-out-button';
 
 export const dynamic = 'force-dynamic';
@@ -50,7 +50,7 @@ export default async function DashboardPage() {
           <div className="flex items-center gap-6">
             <nav className="flex gap-4 text-sm font-medium">
               <Link href="/" className="text-blue-600">
-                Incidents
+                Notifs
               </Link>
               <Link href="/sites" className="text-gray-600 hover:text-gray-900">
                 Sites
@@ -65,12 +65,18 @@ export default async function DashboardPage() {
       </header>
 
       <div className="mx-auto max-w-6xl px-6 py-8">
-        <div className="mb-6 flex items-baseline justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Incidents</h2>
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">Notifs</h2>
+          <Link
+            href="/signaler"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            + Nouvelle notif
+          </Link>
           <span className="text-sm text-gray-500">{incidents?.length ?? 0} total</span>
         </div>
-        <IncidentsList
-          initialIncidents={(incidents as unknown as import('./incidents-list').Incident[]) ?? []}
+        <NotifsList
+          initialNotifs={(incidents as unknown as import('./incidents-list').Incident[]) ?? []}
         />
       </div>
     </main>
