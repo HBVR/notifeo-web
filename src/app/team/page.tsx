@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { createClient } from '@/lib/supabase/server';
 import TeamManager from './team-manager';
 import SignOutButton from '../sign-out-button';
+import { getUsage, type PlanName } from '@/lib/plan-limits';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,18 +15,20 @@ export default async function TeamPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, organization_id, organizations(name)')
+    .select('role, organization_id, organizations(name, plan)')
     .eq('id', user!.id)
     .single();
+
+  const org = profile?.organizations as unknown as { name: string; plan: string } | null;
+  const plan = (org?.plan ?? 'starter') as PlanName;
+  const usage = await getUsage(supabase, profile?.organization_id ?? '', plan);
 
   const { data: members } = await supabase
     .from('profiles')
     .select('id, full_name, email, role, created_at')
     .order('created_at', { ascending: true });
 
-  const orgName =
-    (profile?.organizations as unknown as { name: string } | null)?.name ??
-    'Organisation';
+  const orgName = org?.name ?? 'Organisation';
   const canInvite = profile?.role === 'manager' || profile?.role === 'admin';
 
   return (
@@ -75,6 +78,7 @@ export default async function TeamPage() {
           initialMembers={members ?? []}
           canInvite={canInvite}
           currentUserId={user!.id}
+          canInviteByPlan={usage.canInviteUser}
         />
       </div>
     </main>

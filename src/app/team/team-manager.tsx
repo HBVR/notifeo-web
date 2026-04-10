@@ -27,10 +27,12 @@ export default function TeamManager({
   initialMembers,
   canInvite,
   currentUserId,
+  canInviteByPlan = true,
 }: {
   initialMembers: Member[];
   canInvite: boolean;
   currentUserId: string;
+  canInviteByPlan?: boolean;
 }) {
   const supabase = createClient();
   const [members, setMembers] = useState<Member[]>(initialMembers);
@@ -50,6 +52,12 @@ export default function TeamManager({
     const {
       data: { session },
     } = await supabase.auth.getSession();
+
+    if (!canInviteByPlan) {
+      setError('Limite de membres atteinte. Passez en Pro pour inviter plus de personnes.');
+      setSubmitting(false);
+      return;
+    }
 
     if (!session) {
       setError('Session expirée, reconnecte-toi.');

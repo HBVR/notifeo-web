@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { resizeImage } from '@/lib/resize-image';
 import InstallButton from '../install-button';
+import UpgradeBanner from '../upgrade-banner';
 
 type Site = {
   id: string;
@@ -33,6 +34,9 @@ export default function SignalerContent() {
   const [userId, setUserId] = useState<string | null>(null);
   const [orgId, setOrgId] = useState<string | null>(null);
   const orgIdRef = useRef<string | null>(null);
+  const [canCreateNotif, setCanCreateNotif] = useState(true);
+  const [canCreateSite, setCanCreateSite] = useState(true);
+  const [limitMessage, setLimitMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Step
@@ -90,6 +94,20 @@ export default function SignalerContent() {
         .order('name');
 
       setSites(sitesData ?? []);
+
+      // Check plan limits
+      try {
+        const usageResp = await fetch('/api/usage');
+        if (usageResp.ok) {
+          const usage = await usageResp.json();
+          setCanCreateNotif(usage.canCreateNotif);
+          setCanCreateSite(usage.canCreateSite);
+          if (!usage.canCreateNotif) {
+            setLimitMessage(`Limite atteinte : ${usage.notifsThisMonth}/${usage.limits.max_notifs_month} notifs ce mois. Passez en Pro pour continuer.`);
+          }
+        }
+      } catch {}
+
       setLoading(false);
 
       // QR shortcut: ?site=TOKEN pre-selects a site
@@ -117,6 +135,10 @@ export default function SignalerContent() {
 
   // Create a new site inline
   async function createSite() {
+    if (!canCreateSite) {
+      setError('Limite de sites atteinte. Passez en Pro pour créer plus de sites.');
+      return;
+    }
     if (!newSiteName.trim() || !orgId) return;
     setCreatingSite(true);
     const { data, error } = await supabase
@@ -180,6 +202,10 @@ export default function SignalerContent() {
 
   // Submit the report
   async function submit() {
+    if (!canCreateNotif) {
+      setError('Limite de notifs atteinte pour ce mois. Passez en Pro pour continuer.');
+      return;
+    }
     if (!title.trim()) {
       setError('Le titre est obligatoire.');
       return;
@@ -272,6 +298,11 @@ export default function SignalerContent() {
       </header>
 
       <div className="mx-auto max-w-lg px-4 py-6">
+        {limitMessage && (
+          <div className="mb-4">
+            <UpgradeBanner message={limitMessage} />
+          </div>
+        )}
         {/* ============ STEP 1: PICK SITE ============ */}
         {step === 'pick-site' && (
           <div className="space-y-4">
