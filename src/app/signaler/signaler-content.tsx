@@ -205,7 +205,11 @@ export default function SignalerContent() {
 
       if (insertErr) throw insertErr;
 
-      const hasPhoto = !!(fileInputRef.current?.files?.[0] ?? photoFileRef.current);
+      const domFile = fileInputRef.current?.files?.[0];
+      const refFile = photoFileRef.current;
+      const hasPhoto = !!(domFile ?? refFile);
+      // DEBUG temporaire — à retirer
+      alert(`DEBUG photo:\n- DOM file: ${domFile?.name ?? 'null'}\n- Ref file: ${refFile?.name ?? 'null'}\n- orgId ref: ${orgIdRef.current ?? 'null'}\n- hasPhoto: ${hasPhoto}`);
       if (hasPhoto && notif) {
         const path = await uploadPhoto(notif.id);
         if (path) {

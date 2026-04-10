@@ -137,9 +137,13 @@ export default function NotifsList({
   async function deleteNotif(id: string) {
     if (!confirm('Supprimer cette notif ? Cette action est irréversible.'))
       return;
+    const { error } = await supabase.from('incidents').delete().eq('id', id);
+    if (error) {
+      alert(`Erreur suppression : ${error.message}\n\nVérifie ton rôle (doit être manager ou admin).`);
+      return;
+    }
     setIncidents((prev) => prev.filter((i) => i.id !== id));
     if (openNotif?.id === id) setOpenNotif(null);
-    await supabase.from('incidents').delete().eq('id', id);
   }
 
   async function deletePhoto(notif: Incident, type: 'original' | 'annotated') {
