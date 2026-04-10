@@ -64,7 +64,7 @@ export default function Landing() {
 
       {/* ====== VIDÉO DÉMO ====== */}
       <section className="py-16">
-        <div className="mx-auto max-w-4xl px-6">
+        <div className="mx-auto max-w-6xl px-6">
           <h2 className="text-center text-3xl font-bold text-gray-900 mb-4">
             Découvrez Notifeo en action
           </h2>
