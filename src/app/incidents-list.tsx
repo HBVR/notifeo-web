@@ -43,13 +43,13 @@ const STATUS_STYLES: Record<Incident['status'], string> = {
   closed: 'bg-gray-100 text-gray-700',
 };
 
-export default function IncidentsList({
-  initialIncidents,
+export default function NotifsList({
+  initialNotifs,
 }: {
-  initialIncidents: Incident[];
+  initialNotifs: Incident[];
 }) {
   const supabase = createClient();
-  const [incidents, setIncidents] = useState<Incident[]>(initialIncidents);
+  const [incidents, setIncidents] = useState<Incident[]>(initialNotifs);
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
 
   // Générer les URL signées pour les photos
