@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import ImageAnnotator from './image-annotator';
+import CommentThread from './comment-thread';
 
 export type Incident = {
   id: string;
@@ -414,6 +415,7 @@ export default function NotifsList({
           canManage={isManager}
           isOwner={openNotif.reporter_id === currentUserId}
           archivedSiteNames={archivedSiteNames}
+          currentUserId={currentUserId}
         />
       )}
 
@@ -492,6 +494,7 @@ function ModalDetail({
   canManage = false,
   isOwner = false,
   archivedSiteNames = [],
+  currentUserId,
 }: {
   notif: Incident;
   photoUrl?: string;
@@ -508,6 +511,7 @@ function ModalDetail({
   canManage?: boolean;
   isOwner?: boolean;
   archivedSiteNames?: string[];
+  currentUserId?: string;
 }) {
   const canDelete = canManage || isOwner;
   // Build carousel images
@@ -618,6 +622,13 @@ function ModalDetail({
               {new Date(notif.created_at).toLocaleString('fr-FR')}
             </p>
           </div>
+
+          {/* Conversation */}
+          <CommentThread
+            incidentId={notif.id}
+            currentUserId={currentUserId}
+            isManager={canManage}
+          />
 
           {/* Déplacer vers un autre site */}
           {onMove && sites.length > 0 && (() => {
