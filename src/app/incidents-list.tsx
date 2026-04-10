@@ -139,9 +139,17 @@ export default function NotifsList({
   async function deleteNotif(id: string) {
     if (!confirm('Supprimer cette notif ? Cette action est irréversible.'))
       return;
-    const { error } = await supabase.from('incidents').delete().eq('id', id);
+    // Vérifier que le delete a vraiment affecté une ligne
+    const { error, count } = await supabase
+      .from('incidents')
+      .delete({ count: 'exact' })
+      .eq('id', id);
     if (error) {
-      alert(`Erreur suppression : ${error.message}\n\nVérifie ton rôle (doit être manager ou admin).`);
+      alert(`Erreur suppression : ${error.message}`);
+      return;
+    }
+    if (count === 0) {
+      alert('Suppression refusée. Seuls les managers/admins ou l\'auteur peuvent supprimer.');
       return;
     }
     setIncidents((prev) => prev.filter((i) => i.id !== id));
