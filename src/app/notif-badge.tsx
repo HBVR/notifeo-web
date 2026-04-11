@@ -7,32 +7,44 @@ const POLL_INTERVAL = 15000; // 15 secondes
 const STORAGE_KEY = 'notifeo_last_seen';
 const ORIGINAL_TITLE = 'Notifeo — Signalez, notifiez, résolvez';
 
-function playNotifSound() {
+// Son encodé en base64 (petit "ding" de 0.5s) — fonctionne sans AudioContext
+const NOTIF_SOUND = 'data:audio/wav;base64,UklGRl9vT19teleWQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQ==';
+
+async function playNotifSound() {
   try {
+    // Méthode 1 : AudioContext (plus fiable pour générer un son)
     const ctx = new AudioContext();
-    // Note 1
+    if (ctx.state === 'suspended') await ctx.resume();
+
     const osc1 = ctx.createOscillator();
     const gain1 = ctx.createGain();
     osc1.connect(gain1);
     gain1.connect(ctx.destination);
     osc1.frequency.value = 880;
     osc1.type = 'sine';
-    gain1.gain.value = 0.15;
+    gain1.gain.value = 0.4;
     osc1.start(ctx.currentTime);
     gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
     osc1.stop(ctx.currentTime + 0.3);
-    // Note 2 (plus haute, léger délai)
+
     const osc2 = ctx.createOscillator();
     const gain2 = ctx.createGain();
     osc2.connect(gain2);
     gain2.connect(ctx.destination);
     osc2.frequency.value = 1320;
     osc2.type = 'sine';
-    gain2.gain.value = 0.12;
+    gain2.gain.value = 0.3;
     osc2.start(ctx.currentTime + 0.15);
     gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
     osc2.stop(ctx.currentTime + 0.5);
-  } catch {}
+  } catch {
+    // Méthode 2 fallback : HTML Audio
+    try {
+      const audio = new Audio(NOTIF_SOUND);
+      audio.volume = 0.5;
+      await audio.play();
+    } catch {}
+  }
 }
 
 export default function NotifBadge() {
@@ -45,13 +57,14 @@ export default function NotifBadge() {
   // Détecter la première interaction (requis pour jouer du son)
   useEffect(() => {
     const mark = () => { hasInteractedRef.current = true; };
-    window.addEventListener('click', mark, { once: true });
-    window.addEventListener('keydown', mark, { once: true });
-    window.addEventListener('touchstart', mark, { once: true });
+    // Écouter TOUS les types d'interactions
+    const events = ['click', 'keydown', 'touchstart', 'mousedown', 'scroll'];
+    events.forEach((e) => window.addEventListener(e, mark, { once: true, passive: true }));
+    // Si la page est déjà focus, considérer comme interagi après 2s
+    const timer = setTimeout(() => { hasInteractedRef.current = true; }, 2000);
     return () => {
-      window.removeEventListener('click', mark);
-      window.removeEventListener('keydown', mark);
-      window.removeEventListener('touchstart', mark);
+      events.forEach((e) => window.removeEventListener(e, mark));
+      clearTimeout(timer);
     };
   }, []);
 
