@@ -146,8 +146,8 @@ export default function Landing() {
             {[
               { icon: '⚡', title: 'Zéro installation', desc: 'Fonctionne dans le navigateur. Aucune app à télécharger.' },
               { icon: '📸', title: 'Photo + annotation', desc: 'Prenez une photo, dessinez dessus, ajoutez du texte.' },
+              { icon: '🎤', title: 'Dictée vocale', desc: 'Décrivez le problème à la voix. Idéal les mains sales sur le terrain.' },
               { icon: '💬', title: 'Conversation intégrée', desc: 'Discutez directement sur chaque signalement. Historique complet.' },
-              { icon: '👥', title: 'Multi-sites', desc: 'Gérez autant de sites et d\'employés que nécessaire.' },
               { icon: '🔔', title: 'Alertes en temps réel', desc: 'Badge et compteur de nouvelles notifs. Rien ne vous échappe.' },
               { icon: '🔒', title: 'Sécurisé & RGPD', desc: 'Données isolées par organisation. Hébergé en Europe.' },
             ].map((item) => (
