@@ -63,8 +63,7 @@ export default function ConfirmContent() {
     }
 
     // Rediriger vers /welcome pour définir le mot de passe
-    router.push('/welcome');
-    router.refresh();
+    window.location.href = '/welcome';
   }
 
   if (!tokenHash) {

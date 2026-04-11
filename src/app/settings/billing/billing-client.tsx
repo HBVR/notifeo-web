@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import Link from 'next/link';
 import type { Usage } from '@/lib/plan-limits';
 
 const PLANS = [
@@ -108,9 +107,9 @@ export default function BillingClient({
               className="h-12 w-auto"
             />
           </div>
-          <Link href="/" className="text-sm font-medium text-blue-600">
+          <a href="/" className="text-sm font-medium text-blue-600">
             ← Retour au dashboard
-          </Link>
+          </a>
         </div>
       </header>
 
